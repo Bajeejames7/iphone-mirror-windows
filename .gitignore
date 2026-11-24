@@ -19,3 +19,6 @@ dist/
 # Editors
 .idea/
 .vscode/
+
+# Vendor Bluetooth firmware (not redistributed here)
+bt_hid/fw/
