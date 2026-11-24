@@ -71,6 +71,10 @@ class Bridge(QObject):
 
 
 def app_icon(size: int = 64) -> QIcon:
+    import os
+    ico = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+    if os.path.exists(ico):  # multi-size .ico: crisp on the taskbar at every scale
+        return QIcon(ico)
     pm = QPixmap(size, size)
     pm.fill(Qt.transparent)
     p = QPainter(pm)
@@ -345,6 +349,24 @@ class PhoneWindow(QWidget):
         self._error_box = box
 
     # ------------------------------------------------------------ painting
+    def _shadow_pixmap(self, rect, r):
+        dpr = self.devicePixelRatioF()
+        key = (self.width(), self.height(), dpr, rect.x(), rect.y(), rect.width(), rect.height(), r)
+        if getattr(self, "_shadow_key", None) != key:
+            pm = QPixmap(max(1, round(self.width() * dpr)), max(1, round(self.height() * dpr)))
+            pm.setDevicePixelRatio(dpr)
+            pm.fill(Qt.transparent)
+            sp = QPainter(pm)
+            sp.setRenderHint(QPainter.Antialiasing)
+            sp.setPen(Qt.NoPen)
+            for i in range(SHADOW, 0, -2):
+                a = int(34 * (1 - i / SHADOW) ** 2) + 2
+                sp.setBrush(QColor(0, 0, 0, a))
+                sp.drawRoundedRect(rect.adjusted(-i, -i + 6, i, i + 6), r + i, r + i)
+            sp.end()
+            self._shadow_key, self._shadow_pm = key, pm
+        return self._shadow_pm
+
     def paintEvent(self, _):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
@@ -352,16 +374,17 @@ class PhoneWindow(QWidget):
         rect = self.phone_rect()
         r = self.corner_radius()
 
-        # soft shadow
+        # soft shadow: rendered once per size into a cached pixmap (it was redrawn on every frame)
+        p.drawPixmap(0, 0, self._shadow_pixmap(rect, r))
         p.setPen(Qt.NoPen)
-        for i in range(SHADOW, 0, -2):
-            a = int(34 * (1 - i / SHADOW) ** 2) + 2
-            p.setBrush(QColor(0, 0, 0, a))
-            p.drawRoundedRect(rect.adjusted(-i, -i + 6, i, i + 6), r + i, r + i)
 
         if self.image is not None and self.state in ("mirroring", "paused", "connecting"):
             brush = QBrush(self.image)
             dpr = self.devicePixelRatioF()
+            # the decoder already scales frames to the window's device-pixel size, so the
+            # texture maps ~1:1; smooth filtering would only burn CPU
+            exact = abs(self.image.width() - rect.width() * dpr) <= 2
+            p.setRenderHint(QPainter.SmoothPixmapTransform, not exact)
             t = QTransform()
             t.translate(rect.x(), rect.y())
             t.scale(rect.width() / (self.image.width() / dpr) / dpr, rect.height() / (self.image.height() / dpr) / dpr)

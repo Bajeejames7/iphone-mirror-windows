@@ -18,7 +18,7 @@ DEFAULTS = {
     # resolution requested from the iPhone; the height controls the stream size
     "width": 1920,
     "height": 1080,
-    "fps": 60,
+    "fps": 30,  # 30 is smooth at window size and halves decode + repaint work
     "audio": True,
     "always_on_top": True,
     # window geometry (logical pixels); 0 = automatic

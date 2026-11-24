@@ -6,6 +6,19 @@ much like "iPhone Mirroring" on macOS. Picture and sound come over Wi-Fi with no
 install on the phone. If you also connect the iPhone with a cable once and set up
 WebDriverAgent, you can control it from the PC with your mouse and keyboard.
 
+## What's different in this version
+
+This is Bajeejames7's build of iPhone Mirror, based on
+[0xCodez/iphone-mirror-windows](https://github.com/0xCodez/iphone-mirror-windows) (GPL-3.0). Changes:
+
+- **About 4x less CPU while mirroring.** The drop shadow is drawn once and reused instead of
+  being repainted on every frame, frames that already match the window skip smooth filtering,
+  and the default frame rate is 30 fps. In a test with a 500x1080 stream, CPU use went from
+  154% of a core to about 40%. Idle use (waiting for the phone) is about 0%.
+- **New icon** in every Windows size (16-256 px), so it stays sharp on the taskbar.
+- **Its own taskbar identity** (AppUserModelID `iPhoneMirror.App`): the window shows the app's
+  icon instead of Python's, and groups with a pinned shortcut.
+
 ## Features
 
 - **Wireless AirPlay mirroring with sound.** The iPhone sees the PC as an AirPlay receiver

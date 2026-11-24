@@ -51,8 +51,18 @@ def parse_args():
     return p.parse_args()
 
 
+APP_ID = "iPhoneMirror.App"  # must match the shortcut's System.AppUserModel.ID
+
+
 def main():
     args = parse_args()
+    if sys.platform == "win32":
+        # own taskbar identity: groups with the pinned shortcut and shows its icon, not Python's
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(APP_ID)
+        except Exception:
+            pass
     if args.local:
         net.BIND_HOST = "127.0.0.1"
         net.ADVERTISE = False
